@@ -4,8 +4,7 @@ Paste a reel or TikTok of somewhere in China, and it becomes a pin on a map —
 with the link, a note, and enough info to actually find the place when you're
 standing in the city. Works on your phone and your laptop.
 
-> **Status:** early build. The plan and scaffolding are in place; nothing is
-> deployed yet. See [`PROGRESS.md`](PROGRESS.md) for the running status.
+> **Live:** https://tokyoflexin.github.io/china-reels-map/
 
 ## Why this exists
 
@@ -59,3 +58,26 @@ rely on it to get somewhere.
 
 *Built by a Monash student who was sick of losing good places in his saved
 folder.*
+
+## Running it locally
+
+```sh
+python3 -m http.server 8743
+```
+
+Then open http://localhost:8743. No build step, no dependencies to install —
+`index.html` is the whole app.
+
+## Why `vendor/`
+
+Leaflet and the fonts are committed rather than pulled from a CDN. jsDelivr,
+unpkg and Google Fonts are all unreliable-to-blocked behind the Great
+Firewall, and the site's entire job is to work while you're standing in
+Chongqing. The only requests that leave the origin are OpenStreetMap tiles,
+Nominatim (geocoding) and Wikipedia (blurbs) — all of them on demand, none of
+them needed to boot the page.
+
+Coordinates are WGS-84 everywhere. Pins sit a few hundred metres off inside
+China because Chinese maps use GCJ-02 — that's expected and deliberate: the
+address string is the navigation handle, and the "Open in Amap" link hands
+Amap WGS-84 coordinates and lets it do the conversion.
