@@ -1439,10 +1439,38 @@ svg.leaflet-image-layer.leaflet-interactive path {
   /* ============ map setup ============ */
   var map = L.map('map', { zoomControl:false, attributionControl:true }).fitBounds(CHINA_BOUNDS);
   L.control.zoom({ position:'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  /* Two basemaps, swapped by zoom, because no single keyless tile source
+     does both jobs over China:
+       - Esri World Street Map romanises place names (Beijing, Chongqing,
+         Yellow Sea) which is the whole point of the planning view — but its
+         China coverage STOPS at z13, and from about z11 down its minor
+         street names go back to Chinese.
+       - OSM has the street-level detail and goes to z19, but labels
+         everything locally.
+     So: English while you're choosing a city, OSM once you're down at a
+     venue — which is also the zoom where the address string, not the map,
+     is how you actually navigate (see INSTRUCTIONS.md). */
+  var ENGLISH_MAX_ZOOM = 13;
+  var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom:19,
     attribution:'&copy; OpenStreetMap contributors'
-  }).addTo(map);
+  });
+  var englishLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+    maxZoom: ENGLISH_MAX_ZOOM,
+    attribution:'Esri, HERE, Garmin, NGCC, &copy; OpenStreetMap contributors'
+  });
+
+  function updateBaseLayer(){
+    var wantEnglish = map.getZoom() <= ENGLISH_MAX_ZOOM;
+    var add = wantEnglish ? englishLayer : osmLayer;
+    var drop = wantEnglish ? osmLayer : englishLayer;
+    if (map.hasLayer(add)) return;
+    add.addTo(map);
+    add.bringToBack();
+    if (map.hasLayer(drop)) map.removeLayer(drop);
+  }
+  updateBaseLayer();
+  map.on('zoomend', updateBaseLayer);
 
   /* Leaflet's trackResize only preserves the CURRENT center/zoom, so a
      fitBounds computed against a half-laid-out container (fonts still
