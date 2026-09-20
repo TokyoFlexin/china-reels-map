@@ -1,0 +1,2119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>China Reels Map</title>
+<!-- leaflet 1.9.4 stylesheet, inlined; its images live in vendor/ -->
+<style>
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: url(#default#VML);
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: url(vendor/layers.png);
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: url(vendor/layers-2x.png);
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: url(vendor/marker-icon.png);
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+</style>
+<link rel="stylesheet" href="vendor/fonts.css">
+<style>
+  :root{
+    --bg:#bd2a1e;
+    --bg-deep:#a12318;
+    --ink:#20140f;
+    --cream:#f4e9d2;
+    --cream-dim:#e8d9ba;
+    --muted:#8a6a4a;
+    --muted-on-red:#e8c9ae;
+    --gold:#e8b923;
+    --line:#20140f;
+    --line-on-cream:#20140f33;
+    --danger:#7a1810;
+    --head-font:'Staatliches',cursive;
+    --body-font:'Overpass',sans-serif;
+    --mono-font:'Overpass Mono',monospace;
+  }
+  *{ box-sizing:border-box; }
+  [hidden]{ display:none !important; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:var(--bg);
+    color:var(--cream);
+    font-family:var(--body-font);
+    -webkit-font-smoothing:antialiased;
+    overflow:hidden;
+  }
+  button{ font-family:inherit; cursor:pointer; }
+  input,select,textarea{ font-family:inherit; }
+  a{ color:inherit; }
+
+  #app{
+    height:100dvh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  /* ---------------- topbar ---------------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 18px;
+    border-bottom:2px solid var(--ink);
+    flex-shrink:0;
+    background:var(--bg);
+  }
+  .wordmark{
+    font-family:var(--head-font);
+    font-weight:400;
+    font-size:20px;
+    letter-spacing:.03em;
+    color:var(--cream);
+    white-space:nowrap;
+    text-transform:uppercase;
+  }
+  .wordmark .accent{ color:var(--gold); }
+  .pastebox{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    border:2px solid var(--ink);
+    background:var(--cream);
+    padding:8px 12px;
+    max-width:420px;
+    min-width:0;
+  }
+  .pastebox input{
+    flex:1;
+    min-width:0;
+    border:none;
+    background:transparent;
+    color:var(--ink);
+    font-size:13px;
+    outline:none;
+  }
+  .pastebox input::placeholder{ color:var(--muted); }
+  .btn{
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    border:2px solid var(--ink);
+    background:var(--gold);
+    color:var(--ink);
+    padding:8px 14px;
+    white-space:nowrap;
+  }
+  .btn:hover{ filter:brightness(1.08); }
+  .btn:active{ filter:brightness(.96); }
+  .btn-ghost{
+    background:transparent;
+    color:var(--cream);
+    border-color:var(--cream);
+  }
+  .btn-ghost:hover{ background:#ffffff14; }
+  .icon-btn{
+    border:2px solid var(--ink);
+    background:transparent;
+    color:var(--cream);
+    width:38px;height:38px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;
+  }
+  .icon-btn:hover{ background:#ffffff14; }
+  .menu-dropdown{
+    position:absolute;
+    top:44px;
+    right:0;
+    z-index:1000;
+    display:flex;
+    flex-direction:column;
+    background:var(--cream);
+    border:2px solid var(--ink);
+    min-width:150px;
+  }
+  .menu-dropdown button{
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:none;
+    border:none;
+    text-align:left;
+    padding:10px 12px;
+  }
+  .menu-dropdown button:hover{ background:var(--gold); }
+  .menu-dropdown button + button{ border-top:1.5px dashed var(--ink); }
+
+  /* ---------------- filters ---------------- */
+  .filters{
+    display:flex;
+    gap:16px;
+    padding:10px 18px;
+    border-bottom:2px solid var(--ink);
+    flex-shrink:0;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+  .filters::-webkit-scrollbar{ display:none; }
+  .filter-group{ display:flex; gap:6px; flex-shrink:0; }
+  .filter-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--mono-font);
+    font-weight:600;
+    font-size:10.5px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:6px 10px;
+    border:2px solid transparent;
+    background:transparent;
+    color:var(--muted-on-red);
+    white-space:nowrap;
+  }
+  .filter-chip.on{
+    color:var(--cream);
+    border-color:var(--cream);
+  }
+  .filter-chip .fshape{ width:9px; height:9px; background:var(--cream); flex-shrink:0; }
+  .filter-chip.on .fshape{ background:var(--gold); }
+
+  /* ---------------- body ---------------- */
+  .body-row{
+    flex:1;
+    display:flex;
+    min-height:0;
+    position:relative;
+  }
+  #sidebar{
+    width:280px;
+    flex-shrink:0;
+    background:var(--bg);
+    border-right:2px dashed var(--ink);
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .sidebar-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 14px 8px;
+    flex-shrink:0;
+  }
+  .sidebar-title{
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--muted-on-red);
+  }
+  .back-link{
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    color:var(--cream);
+    background:none;
+    border:none;
+    padding:2px 0;
+  }
+  #placeList{
+    flex:1;
+    overflow-y:auto;
+    padding:6px 10px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .place-card{
+    border:2px solid var(--ink);
+    border-left-width:7px;
+    background:var(--cream);
+    color:var(--ink);
+    padding:9px 10px;
+    text-align:left;
+    width:100%;
+  }
+  .place-card:hover{ filter:brightness(.97); }
+  .place-card.selected{ outline:2px solid var(--gold); outline-offset:-2px; }
+  .place-card .pname{
+    font-family:var(--body-font);
+    font-weight:700;
+    font-size:13px;
+    margin:0 0 2px;
+    text-transform:uppercase;
+  }
+  .place-card .pmeta{
+    font-family:var(--mono-font);
+    font-size:10px;
+    color:var(--muted);
+    letter-spacing:.02em;
+    text-transform:uppercase;
+  }
+  .list-group-head{
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--cream);
+    padding:12px 4px 5px;
+    border-bottom:1.5px dashed var(--cream);
+    margin-bottom:2px;
+  }
+  #placeList > .list-group-head:first-child{ padding-top:2px; }
+  .empty-note{
+    padding:16px 6px;
+    font-size:12.5px;
+    color:var(--muted-on-red);
+    line-height:1.5;
+  }
+
+  /* ---------------- add/edit form ---------------- */
+  #addForm{
+    flex:1;
+    overflow-y:auto;
+    padding:4px 14px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{
+    font-family:var(--mono-font);
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--muted-on-red);
+  }
+  .field-hint{
+    font-size:11px;
+    line-height:1.4;
+    color:var(--muted-on-red);
+    margin:2px 0 0;
+  }
+  .field input[type=text],
+  .field input[type=url],
+  .field select,
+  .field textarea{
+    border:2px solid var(--ink);
+    background:var(--cream);
+    color:var(--ink);
+    padding:8px 9px;
+    font-size:13px;
+    width:100%;
+  }
+  .field textarea{ resize:vertical; min-height:56px; }
+  .field-row{ display:flex; gap:8px; }
+  .field-row .field{ flex:1; min-width:0; }
+  .locate-row{ display:flex; gap:8px; }
+  .locate-row input{ flex:1; }
+  #geoResults{ display:flex; flex-direction:column; gap:4px; }
+  .geo-result{
+    text-align:left;
+    border:1.5px solid var(--ink);
+    background:var(--cream);
+    color:var(--ink);
+    padding:6px 8px;
+    font-size:11.5px;
+    line-height:1.35;
+  }
+  .geo-result:hover{ background:var(--gold); }
+  .geo-status{
+    font-family:var(--mono-font);
+    font-size:11px;
+    color:var(--muted-on-red);
+  }
+  .form-actions{
+    display:flex;
+    gap:8px;
+    padding-top:6px;
+    border-top:2px dashed var(--ink);
+    margin-top:4px;
+  }
+  .form-actions .btn{ flex:1; text-align:center; }
+  .btn-delete{ background:transparent; border-color:var(--cream); color:var(--cream); }
+
+  /* ---------------- map ---------------- */
+  .maparea{ position:relative; flex:1; min-width:0; }
+  #map{ position:absolute; inset:0; background:var(--bg-deep); }
+  .leaflet-container{ background:var(--bg-deep); font-family:var(--body-font); }
+
+  .reset-btn{
+    position:absolute;
+    top:14px;
+    left:14px;
+    z-index:500;
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    border:2px solid var(--ink);
+    background:var(--cream);
+    color:var(--ink);
+    padding:8px 12px;
+  }
+
+  .pin-icon{
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pin-shape{
+    width:18px; height:18px;
+    background:var(--ink);
+    border:2px solid var(--cream);
+    box-shadow:0 1px 3px rgba(0,0,0,.4);
+  }
+  .pin-shape.is-selected{ background:var(--gold); }
+  .shape-circle{ border-radius:50%; }
+  .shape-square{ border-radius:0; }
+  .shape-diamond{ transform:rotate(45deg); }
+  .shape-triangle{ width:0;height:0;background:none !important;border:none !important; border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:17px solid var(--ink); filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+  .shape-triangle.is-selected{ border-bottom-color:var(--gold); }
+  .shape-tridown{ width:0;height:0;background:none !important;border:none !important; border-left:10px solid transparent;border-right:10px solid transparent;border-top:17px solid var(--ink); filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
+  .shape-tridown.is-selected{ border-top-color:var(--gold); }
+  .shape-hexagon{ clip-path:polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%); }
+  .shape-ring{ background:transparent; border:3px solid var(--ink); border-radius:50%; }
+  .shape-ring.is-selected{ border-color:var(--gold); }
+  .temp-pin{
+    width:22px;height:22px;border-radius:50%;
+    background:var(--gold);
+    border:3px solid var(--ink);
+    box-shadow:0 0 0 4px #e8b92355;
+  }
+
+  .city-label-icon{ position:relative; }
+  .city-tag{
+    position:absolute;
+    left:0; top:0;
+    transform:translate(-50%,-135%);
+    background:var(--cream);
+    color:var(--ink);
+    border:2px solid var(--ink);
+    padding:4px 10px;
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:11.5px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    white-space:nowrap;
+    box-shadow:0 2px 0 rgba(0,0,0,.3);
+    cursor:pointer;
+  }
+  .city-tag::after{
+    content:'';
+    position:absolute;
+    left:50%; bottom:-7px;
+    transform:translateX(-50%);
+    width:0; height:0;
+    border-left:6px solid transparent;
+    border-right:6px solid transparent;
+    border-top:7px solid var(--ink);
+  }
+  .city-tag.dir-down{ transform:translate(-50%,35%); }
+  .city-tag.dir-down::after{
+    top:-7px; bottom:auto;
+    border-top:none; border-bottom:7px solid var(--ink);
+  }
+  .city-tag.dir-left{ transform:translate(-110%,-50%); }
+  .city-tag.dir-left::after{
+    left:auto; right:-7px; top:50%; bottom:auto;
+    transform:translateY(-50%);
+    border-left:7px solid var(--ink); border-right:none;
+    border-top:6px solid transparent; border-bottom:6px solid transparent;
+  }
+  .city-tag.dir-right{ transform:translate(10%,-50%); }
+  .city-tag.dir-right::after{
+    left:-7px; top:50%; bottom:auto;
+    transform:translateY(-50%);
+    border-right:7px solid var(--ink); border-left:none;
+    border-top:6px solid transparent; border-bottom:6px solid transparent;
+  }
+  .city-tag:hover{ background:var(--gold); }
+  .city-tag.active{ background:var(--gold); }
+
+  /* ---------------- info card ---------------- */
+  #infoCard{
+    position:absolute;
+    right:16px;
+    bottom:16px;
+    width:280px;
+    max-width:calc(100vw - 32px);
+    max-height:calc(100% - 32px);
+    overflow-y:auto;
+    background:var(--cream);
+    color:var(--ink);
+    border:2px solid var(--ink);
+    padding:16px 18px;
+    z-index:500;
+    box-shadow:0 12px 0 -8px rgba(0,0,0,.25);
+  }
+  #infoCard .iname{
+    font-family:var(--head-font);
+    font-weight:400;
+    font-size:22px;
+    letter-spacing:.02em;
+    margin:0 0 2px;
+    text-transform:uppercase;
+  }
+  #infoCard .ilocal{ font-size:13px; color:var(--muted); margin:0 0 10px; }
+  .tagrow{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .tag{
+    font-family:var(--mono-font);
+    font-weight:600;
+    font-size:9.5px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+  }
+  .tag.status-want{ background:transparent; }
+  .tag.status-booked{ background:#00000010; }
+  .tag.status-visited{ background:var(--gold); }
+  #infoCard .inote{ font-size:12.5px; line-height:1.55; color:#4a382b; margin:0 0 10px; }
+  .tagline{ display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; }
+  .tagline .microtag{ font-family:var(--mono-font); font-size:10px; color:var(--muted); }
+  .tagline .microtag::before{ content:'#'; }
+  .source-link{
+    display:inline-block;
+    font-family:var(--mono-font);
+    font-size:11px;
+    font-weight:700;
+    text-decoration:underline;
+    margin-bottom:10px;
+  }
+  .addr-block{ border-top:2px dashed var(--ink); padding-top:10px; margin-top:2px; }
+  .addr-text{ font-family:var(--mono-font); font-size:10.5px; color:var(--muted); line-height:1.4; margin:0 0 8px; }
+  .addr-actions{ display:flex; gap:6px; flex-wrap:wrap; }
+  .copy-btn, .amap-btn, .edit-btn{
+    font-family:var(--mono-font);
+    font-weight:700;
+    font-size:9.5px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    background:transparent;
+    padding:5px 9px;
+  }
+  .copy-btn.copied{ background:var(--gold); }
+  .card-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid var(--ink); }
+  .close-x{
+    position:absolute; top:8px; right:8px;
+    width:24px;height:24px;
+    border:none; background:none; color:var(--muted);
+    font-size:16px; line-height:1;
+  }
+
+  /* ---------------- toast ---------------- */
+  #toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--ink);
+    color:var(--cream);
+    font-family:var(--mono-font);
+    font-size:12px;
+    padding:9px 16px;
+    border:2px solid var(--gold);
+    z-index:2000;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  #toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------------- mobile ---------------- */
+  .mobile-fab-row{ display:none; }
+  @media (max-width:760px){
+    .topbar{ padding:10px 12px; gap:8px; }
+    .wordmark{ font-size:16px; }
+    .pastebox{ display:none; }
+    #sidebar{
+      position:absolute;
+      left:0; right:0; bottom:0;
+      top:auto;
+      height:62%;
+      width:100%;
+      border-right:none;
+      border-top:2px solid var(--ink);
+      transform:translateY(100%);
+      transition:transform .22s ease;
+      z-index:600;
+    }
+    #sidebar.open{ transform:translateY(0); }
+    .maparea{ width:100%; }
+    .mobile-fab-row{
+      display:flex;
+      position:absolute;
+      left:14px; right:14px; bottom:14px;
+      z-index:550;
+      justify-content:space-between;
+      pointer-events:none;
+    }
+    .mobile-fab-row .btn, .mobile-fab-row .icon-btn{ pointer-events:auto; }
+    #infoCard{ left:16px; right:16px; width:auto; bottom:96px; max-height:50vh; }
+    .reset-btn{ top:10px; left:10px; }
+    .leaflet-control-zoom{ display:none; }
+    /* sheet is z-index 600, FAB row 550 — Leaflet's bottom controls default
+       to 1000 and rendered the attribution strip over the sheet's content */
+    .leaflet-bottom{ z-index:500; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header class="topbar">
+    <div class="wordmark">China Reels <span class="accent">Map</span></div>
+    <div class="pastebox">
+      <input id="quickPaste" type="text" placeholder="paste a reel link, or type a place…" />
+    </div>
+    <button class="btn" id="openAddBtn">Punch a ticket →</button>
+    <div style="position:relative;">
+      <button class="icon-btn" id="menuBtn" title="Export / Import" aria-label="Export or import data">⋮</button>
+      <div id="menuDropdown" class="menu-dropdown" hidden>
+        <button type="button" id="exportBtn">Export JSON</button>
+        <button type="button" id="importBtn">Import JSON</button>
+      </div>
+    </div>
+    <input type="file" id="importInput" accept="application/json" hidden>
+  </header>
+
+  <div class="filters">
+    <div class="filter-group" id="categoryFilters"></div>
+    <div class="filter-group" id="cityFilters"></div>
+    <div class="filter-group" id="statusFilters"></div>
+  </div>
+
+  <div class="body-row">
+    <aside id="sidebar">
+      <div class="sidebar-head" id="listHead">
+        <span class="sidebar-title">The Manifest</span>
+        <span class="sidebar-title" id="placeCount">0 stops</span>
+      </div>
+      <div id="placeList"></div>
+
+      <div class="sidebar-head" id="formHead" hidden>
+        <button class="back-link" id="backToListBtn">← Back to list</button>
+      </div>
+      <form id="addForm" hidden>
+        <div class="field">
+          <label for="f_source">Source link (optional)</label>
+          <input type="url" id="f_source" placeholder="https://www.tiktok.com/@.../video/...">
+          <p class="field-hint">Kept as a reference, that's all — reels don't carry location data, so I can't watch it. Type the name below and hit Locate.</p>
+        </div>
+        <div class="field">
+          <label for="f_name">Place name</label>
+          <input type="text" id="f_name" required placeholder="e.g. Yang's Fried Dumplings">
+        </div>
+        <div class="locate-row">
+          <input type="text" id="f_locate" placeholder="search for it on the map…">
+          <button type="button" class="btn" id="locateBtn">Locate</button>
+        </div>
+        <p class="geo-status" id="geoStatus"></p>
+        <div id="geoResults"></div>
+
+        <div class="field">
+          <label for="f_nameLocal">Local name (中文)</label>
+          <input type="text" id="f_nameLocal" placeholder="小杨生煎">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="f_category">Category</label>
+            <select id="f_category"></select>
+          </div>
+          <div class="field">
+            <label for="f_city">City</label>
+            <select id="f_city"></select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f_status">Status</label>
+          <select id="f_status">
+            <option value="want">Want</option>
+            <option value="booked">Booked</option>
+            <option value="visited">Visited</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f_address">Address</label>
+          <input type="text" id="f_address" placeholder="fills in once you locate it">
+        </div>
+        <div class="field">
+          <label for="f_notes">Notes</label>
+          <textarea id="f_notes" placeholder="fills from Wikipedia for well-known spots — otherwise, what to get, when to go, anything you'd forget"></textarea>
+        </div>
+        <div class="field">
+          <label for="f_tags">Tags (comma separated)</label>
+          <input type="text" id="f_tags" placeholder="dumplings, cheap eats">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn" id="saveBtn">Stamp it</button>
+          <button type="button" class="btn btn-delete" id="deleteBtn" hidden>Delete</button>
+        </div>
+      </form>
+    </aside>
+
+    <main class="maparea">
+      <div id="map"></div>
+      <button class="reset-btn" id="resetViewBtn">Whole trip</button>
+
+      <div id="infoCard" hidden>
+        <button class="close-x" id="closeInfoBtn" aria-label="Close">✕</button>
+        <p class="iname" id="ic_name"></p>
+        <p class="ilocal" id="ic_local"></p>
+        <div class="tagrow" id="ic_tags"></div>
+        <p class="inote" id="ic_notes"></p>
+        <div class="tagline" id="ic_taglist"></div>
+        <a class="source-link" id="ic_source" target="_blank" rel="noopener"></a>
+        <div class="addr-block">
+          <p class="addr-text" id="ic_address"></p>
+          <div class="addr-actions">
+            <button class="copy-btn" id="ic_copy">Copy address</button>
+            <a class="amap-btn" id="ic_amap" target="_blank" rel="noopener">Open in Amap</a>
+          </div>
+        </div>
+        <div class="card-foot">
+          <button class="edit-btn" id="ic_edit">Edit</button>
+        </div>
+      </div>
+
+      <div class="mobile-fab-row">
+        <button class="btn" id="mobileListBtn">List</button>
+        <button class="btn" id="mobileAddBtn">+ Add</button>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<!-- self-hosted: jsDelivr/unpkg are unreliable behind the GFW, and this site's
+     whole job is to work in China. sha256 of vendor/leaflet.js verified
+     identical to the CDN copy that used to load here. -->
+<script src="vendor/leaflet.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  /* ============ config ============ */
+  var CATEGORIES = [
+    { id:'sight',    label:'Sight',    shape:'circle' },
+    { id:'food',     label:'Food',     shape:'square' },
+    { id:'shopping', label:'Shopping', shape:'diamond' },
+    { id:'nature',   label:'Nature',   shape:'triangle' },
+    { id:'cafe',     label:'Cafe',     shape:'hexagon' },
+    { id:'bar',      label:'Bar',      shape:'tridown' },
+    { id:'other',    label:'Other',    shape:'ring' }
+  ];
+  var CATEGORY_MAP = {};
+  CATEGORIES.forEach(function(c){ CATEGORY_MAP[c.id] = c; });
+
+  var CITIES = ['Shanghai','Chongqing','Zhangjiajie','Beijing'];
+  var CITY_CENTERS = {
+    /* `dir` splays each tag a different way off its point — at the idle
+       China zoom Chongqing/Zhangjiajie/Shanghai sit close enough that
+       four tags all drawn upward overlap into an unreadable stack. */
+    Shanghai:    { lat:31.2304, lng:121.4737, dir:'up'    },
+    Chongqing:   { lat:29.5630, lng:106.5516, dir:'left'  },
+    Zhangjiajie: { lat:29.1170, lng:110.4790, dir:'down'  },
+    Beijing:     { lat:39.9042, lng:116.4074, dir:'up'    }
+  };
+  var CITY_LABEL_MAX_ZOOM = 6;
+  var STATUSES = ['want','booked','visited'];
+  var CHINA_BOUNDS = [[15,73],[54,135]];
+  var STORAGE_KEY = 'china-reels-map:places:v1';
+
+  /* ============ storage module (swap this for a shared backend later) ============ */
+  var Storage = {
+    getAll: function(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch(e){ return []; }
+    },
+    saveAll: function(places){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(places));
+    },
+    upsert: function(place){
+      var all = this.getAll();
+      var idx = all.findIndex(function(p){ return p.id === place.id; });
+      if (idx >= 0) all[idx] = place; else all.push(place);
+      this.saveAll(all);
+      return all;
+    },
+    remove: function(id){
+      var all = this.getAll().filter(function(p){ return p.id !== id; });
+      this.saveAll(all);
+      return all;
+    },
+    exportJSON: function(){
+      return JSON.stringify(this.getAll(), null, 2);
+    },
+    importJSON: function(str){
+      var data = JSON.parse(str);
+      if (!Array.isArray(data)) throw new Error('Expected a JSON array of places.');
+      this.saveAll(data);
+      return data;
+    },
+    seedIfEmpty: function(){
+      var self = this;
+      if (localStorage.getItem(STORAGE_KEY)) return Promise.resolve(this.getAll());
+      return fetch('data/places.json').then(function(res){ return res.json(); })
+        .then(function(seed){ self.saveAll(seed); return seed; })
+        .catch(function(){ self.saveAll([]); return []; });
+    }
+  };
+
+  /* ============ state ============ */
+  var state = {
+    places: [],
+    filters: { category:null, city:null, status:null },
+    selectedId: null,
+    editingId: null,
+    tempMarker: null
+  };
+
+  /* ============ map setup ============ */
+  var map = L.map('map', { zoomControl:false, attributionControl:true }).fitBounds(CHINA_BOUNDS);
+  L.control.zoom({ position:'bottomright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom:19,
+    attribution:'&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  /* Leaflet's trackResize only preserves the CURRENT center/zoom, so a
+     fitBounds computed against a half-laid-out container (fonts still
+     loading) stays wrong forever, and rotation / iOS URL-bar collapse never
+     re-fits. Watch the container instead: revalidate always, re-fit China
+     while we're on the idle view (nothing selected, no draft pin). */
+  if (window.ResizeObserver){
+    new ResizeObserver(function(){
+      map.invalidateSize();
+      if (!state.selectedId && !state.tempMarker) map.fitBounds(CHINA_BOUNDS);
+    }).observe(document.getElementById('map'));
+  }
+
+  var markerLayer = L.layerGroup().addTo(map);
+  var markersById = {};
+  var cityLabelLayer = L.layerGroup().addTo(map);
+
+  function renderCityLabels(){
+    cityLabelLayer.clearLayers();
+    CITIES.forEach(function(city){
+      var c = CITY_CENTERS[city];
+      if (!c) return;
+      var active = state.filters.city === city;
+      var icon = L.divIcon({
+        className:'city-label-icon',
+        html:'<div class="city-tag dir-' + (c.dir || 'up') + (active ? ' active' : '') + '">' + city.toUpperCase() + '</div>',
+        iconSize:[0,0],
+        iconAnchor:[0,0]
+      });
+      var m = L.marker([c.lat, c.lng], { icon:icon, interactive:true, keyboard:false });
+      m.on('click', function(cityName, center){
+        return function(){
+          state.filters.city = cityName;
+          refreshAll();
+          map.flyTo([center.lat, center.lng], 11, { duration:1.1 });
+        };
+      }(city, c));
+      m.addTo(cityLabelLayer);
+    });
+  }
+
+  function updateCityLabelVisibility(){
+    var show = map.getZoom() <= CITY_LABEL_MAX_ZOOM;
+    if (show){ if (!map.hasLayer(cityLabelLayer)) cityLabelLayer.addTo(map); }
+    else { if (map.hasLayer(cityLabelLayer)) map.removeLayer(cityLabelLayer); }
+  }
+  map.on('zoomend', updateCityLabelVisibility);
+
+  function pinDivIcon(categoryId, selected){
+    var cat = CATEGORY_MAP[categoryId] || CATEGORY_MAP.other;
+    var cls = 'pin-shape shape-' + cat.shape + (selected ? ' is-selected' : '');
+    return L.divIcon({
+      className:'pin-icon',
+      html:'<div class="' + cls + '"></div>',
+      iconSize:[22,22],
+      iconAnchor:[11,11]
+    });
+  }
+
+  function renderPins(){
+    markerLayer.clearLayers();
+    markersById = {};
+    getFilteredPlaces().forEach(function(p){
+      var m = L.marker([p.coords.lat, p.coords.lng], {
+        icon: pinDivIcon(p.category, p.id === state.selectedId)
+      });
+      m.on('click', function(){ selectPlace(p.id); });
+      m.addTo(markerLayer);
+      markersById[p.id] = m;
+    });
+  }
+
+  function flyToPlace(p){
+    map.flyTo([p.coords.lat, p.coords.lng], 14, { duration:1.1 });
+  }
+
+  function resetToChina(){
+    state.selectedId = null;
+    state.filters = { category:null, city:null, status:null };
+    hideInfoCard();
+    refreshAll();
+    map.flyToBounds(CHINA_BOUNDS, { duration:1.0 });
+  }
+
+  /* ============ filtering ============ */
+  function getFilteredPlaces(){
+    return state.places.filter(function(p){
+      if (state.filters.category && p.category !== state.filters.category) return false;
+      if (state.filters.city && p.city !== state.filters.city) return false;
+      if (state.filters.status && p.status !== state.filters.status) return false;
+      return true;
+    });
+  }
+
+  /* ============ rendering: filter chips ============ */
+  function shapeSwatchHTML(shape){
+    return '<span class="fshape shape-' + shape + '"></span>';
+  }
+
+  function renderFilterChips(){
+    var catWrap = document.getElementById('categoryFilters');
+    catWrap.innerHTML = '';
+    catWrap.appendChild(makeChip('All', !state.filters.category, function(){
+      state.filters.category = null; refreshAll();
+    }));
+    CATEGORIES.forEach(function(c){
+      var chip = makeChip(c.label, state.filters.category === c.id, function(){
+        state.filters.category = (state.filters.category === c.id) ? null : c.id;
+        refreshAll();
+      }, c.shape);
+      catWrap.appendChild(chip);
+    });
+
+    var cityWrap = document.getElementById('cityFilters');
+    cityWrap.innerHTML = '';
+    cityWrap.appendChild(makeChip('All Cities', !state.filters.city, function(){
+      state.filters.city = null; refreshAll();
+    }));
+    CITIES.forEach(function(city){
+      cityWrap.appendChild(makeChip(city, state.filters.city === city, function(){
+        state.filters.city = (state.filters.city === city) ? null : city;
+        refreshAll();
+      }));
+    });
+
+    var statusWrap = document.getElementById('statusFilters');
+    statusWrap.innerHTML = '';
+    statusWrap.appendChild(makeChip('All Status', !state.filters.status, function(){
+      state.filters.status = null; refreshAll();
+    }));
+    STATUSES.forEach(function(s){
+      statusWrap.appendChild(makeChip(s, state.filters.status === s, function(){
+        state.filters.status = (state.filters.status === s) ? null : s;
+        refreshAll();
+      }));
+    });
+  }
+
+  function makeChip(label, on, onClick, shape){
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filter-chip' + (on ? ' on' : '');
+    btn.innerHTML = (shape ? shapeSwatchHTML(shape) : '') + label.toUpperCase();
+    btn.addEventListener('click', onClick);
+    return btn;
+  }
+
+  /* ============ rendering: list ============ */
+  function renderList(){
+    var list = document.getElementById('placeList');
+    var filtered = getFilteredPlaces();
+    document.getElementById('placeCount').textContent = filtered.length + (filtered.length === 1 ? ' stop' : ' stops');
+    list.innerHTML = '';
+    if (!filtered.length){
+      var note = document.createElement('p');
+      note.className = 'empty-note';
+      note.textContent = 'Nothing here yet. Paste a link or punch a new ticket to add a place.';
+      list.appendChild(note);
+      return;
+    }
+
+    var groups = {};
+    var extraOrder = [];
+    filtered.forEach(function(p){
+      var city = p.city || 'Other';
+      if (!groups[city]){ groups[city] = []; if (CITIES.indexOf(city) === -1) extraOrder.push(city); }
+      groups[city].push(p);
+    });
+    var cityOrder = CITIES.filter(function(c){ return groups[c]; }).concat(extraOrder);
+
+    cityOrder.forEach(function(city){
+      var head = document.createElement('div');
+      head.className = 'list-group-head';
+      head.textContent = city + ' · ' + groups[city].length;
+      list.appendChild(head);
+
+      groups[city].forEach(function(p){
+        var card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'place-card' + (p.id === state.selectedId ? ' selected' : '');
+        card.dataset.id = p.id;
+        card.style.borderLeftColor = (p.id === state.selectedId) ? '#e8b923' : '#20140f';
+        card.innerHTML =
+          '<p class="pname">' + escapeHTML(p.name) + '</p>' +
+          '<p class="pmeta">' + escapeHTML(CATEGORY_MAP[p.category] ? CATEGORY_MAP[p.category].label : p.category) + '</p>';
+        card.addEventListener('click', function(){
+          selectPlace(p.id);
+          closeMobileSidebarSoon();
+        });
+        list.appendChild(card);
+      });
+    });
+  }
+
+  function highlightSelectedCard(){
+    document.querySelectorAll('.place-card').forEach(function(card){
+      var sel = card.dataset.id === state.selectedId;
+      card.classList.toggle('selected', sel);
+      card.style.borderLeftColor = sel ? '#e8b923' : '#20140f';
+    });
+  }
+
+  /* ============ info card ============ */
+  function selectPlace(id, opts){
+    state.selectedId = id;
+    var p = state.places.find(function(x){ return x.id === id; });
+    if (!p) return;
+    renderPins();
+    highlightSelectedCard();
+    showInfoCard(p);
+    if (!opts || opts.fly !== false) flyToPlace(p);
+  }
+
+  function showInfoCard(p){
+    var card = document.getElementById('infoCard');
+    document.getElementById('ic_name').textContent = p.name;
+    document.getElementById('ic_local').textContent = p.nameLocal ? (p.nameLocal + ' · ' + p.city) : p.city;
+
+    var tagsWrap = document.getElementById('ic_tags');
+    var cat = CATEGORY_MAP[p.category] || CATEGORY_MAP.other;
+    tagsWrap.innerHTML =
+      '<span class="tag">' + escapeHTML(cat.label) + '</span>' +
+      '<span class="tag status-' + p.status + '">' + escapeHTML(p.status) + '</span>';
+
+    document.getElementById('ic_notes').textContent = p.notes || '';
+    document.getElementById('ic_notes').style.display = p.notes ? '' : 'none';
+
+    var tagline = document.getElementById('ic_taglist');
+    tagline.innerHTML = '';
+    (p.tags || []).forEach(function(t){
+      var el = document.createElement('span');
+      el.className = 'microtag';
+      el.textContent = t;
+      tagline.appendChild(el);
+    });
+
+    var srcLink = document.getElementById('ic_source');
+    if (p.source && p.source.url){
+      srcLink.href = p.source.url;
+      srcLink.textContent = '▶ open source' + (p.source.platform ? ' (' + p.source.platform + ')' : '');
+      srcLink.style.display = '';
+    } else if (p.source && p.source.platform === 'manual') {
+      srcLink.removeAttribute('href');
+      srcLink.textContent = '✎ seeded from itinerary';
+      srcLink.style.display = '';
+    } else {
+      srcLink.removeAttribute('href');
+      srcLink.style.display = 'none';
+    }
+
+    document.getElementById('ic_address').textContent = p.address || '(no address on file)';
+    document.getElementById('ic_amap').href = amapUrl(p);
+
+    card.hidden = false;
+  }
+
+  function hideInfoCard(){
+    document.getElementById('infoCard').hidden = true;
+  }
+
+  function amapUrl(p){
+    return 'https://uri.amap.com/marker?position=' + p.coords.lng + ',' + p.coords.lat +
+      '&name=' + encodeURIComponent(p.name) + '&coordinate=wgs84&callnative=0';
+  }
+
+  /* ============ toast ============ */
+  var toastTimer = null;
+  function toast(msg){
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 1800);
+  }
+
+  /* ============ add / edit form ============ */
+  function populateSelects(){
+    var catSel = document.getElementById('f_category');
+    catSel.innerHTML = CATEGORIES.map(function(c){ return '<option value="' + c.id + '">' + c.label + '</option>'; }).join('');
+    var citySel = document.getElementById('f_city');
+    citySel.innerHTML = CITIES.map(function(c){ return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  }
+
+  function slugify(str){
+    return (str || '').toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g,'-')
+      .replace(/(^-|-$)/g,'') || 'place';
+  }
+
+  function makeId(name){
+    var existing = new Set(state.places.map(function(p){ return p.id; }));
+    var base = slugify(name);
+    var id = base, i = 2;
+    while (existing.has(id)) { id = base + '-' + (i++); }
+    return id;
+  }
+
+  function escapeHTML(str){
+    return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
+  function clearTempMarker(){
+    if (state.tempMarker){ map.removeLayer(state.tempMarker); state.tempMarker = null; }
+  }
+
+  function dropTempMarker(lat, lng){
+    clearTempMarker();
+    state.tempMarker = L.marker([lat,lng], {
+      draggable:true,
+      icon: L.divIcon({ className:'pin-icon', html:'<div class="temp-pin"></div>', iconSize:[22,22], iconAnchor:[11,11] })
+    }).addTo(map);
+    map.flyTo([lat,lng], 14, { duration:0.9 });
+  }
+
+  function openAddForm(prefill){
+    state.editingId = null;
+    hideInfoCard();
+    document.getElementById('formHead').hidden = false;
+    document.getElementById('addForm').hidden = false;
+    document.getElementById('placeList').hidden = true;
+    document.getElementById('listHead').hidden = true;
+    document.getElementById('deleteBtn').hidden = true;
+    document.getElementById('saveBtn').textContent = 'Stamp it';
+
+    var form = document.getElementById('addForm');
+    form.reset();
+    document.getElementById('geoResults').innerHTML = '';
+    document.getElementById('geoStatus').textContent = '';
+    clearTempMarker();
+
+    if (prefill){
+      if (prefill.url) document.getElementById('f_source').value = prefill.url;
+      if (prefill.name){
+        document.getElementById('f_name').value = prefill.name;
+        document.getElementById('f_locate').value = prefill.name;
+      }
+    }
+    openSidebarMobile();
+  }
+
+  function openEditForm(place){
+    state.editingId = place.id;
+    hideInfoCard();
+    document.getElementById('formHead').hidden = false;
+    document.getElementById('addForm').hidden = false;
+    document.getElementById('placeList').hidden = true;
+    document.getElementById('listHead').hidden = true;
+    document.getElementById('deleteBtn').hidden = false;
+    document.getElementById('saveBtn').textContent = 'Save changes';
+
+    document.getElementById('f_source').value = (place.source && place.source.url) || '';
+    document.getElementById('f_name').value = place.name || '';
+    document.getElementById('f_locate').value = place.name || '';
+    document.getElementById('f_nameLocal').value = place.nameLocal || '';
+    document.getElementById('f_category').value = place.category;
+    document.getElementById('f_city').value = place.city;
+    document.getElementById('f_status').value = place.status;
+    document.getElementById('f_address').value = place.address || '';
+    document.getElementById('f_notes').value = place.notes || '';
+    document.getElementById('f_tags').value = (place.tags || []).join(', ');
+    document.getElementById('geoResults').innerHTML = '';
+    document.getElementById('geoStatus').textContent = '';
+
+    dropTempMarker(place.coords.lat, place.coords.lng);
+    openSidebarMobile();
+  }
+
+  function closeForm(){
+    document.getElementById('formHead').hidden = true;
+    document.getElementById('addForm').hidden = true;
+    document.getElementById('placeList').hidden = false;
+    document.getElementById('listHead').hidden = false;
+    clearTempMarker();
+    state.editingId = null;
+  }
+
+  function isUrl(str){
+    return /^https?:\/\//i.test((str || '').trim());
+  }
+
+  /* ---- geocoding ---- */
+  var lastGeoAt = 0;
+  function geocode(query){
+    var statusEl = document.getElementById('geoStatus');
+    var resultsEl = document.getElementById('geoResults');
+    var now = Date.now();
+    var wait = Math.max(0, 1100 - (now - lastGeoAt));
+    statusEl.textContent = 'Searching…';
+    resultsEl.innerHTML = '';
+    setTimeout(function(){
+      lastGeoAt = Date.now();
+      var url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&namedetails=1&extratags=1&limit=5&countrycodes=cn&q=' + encodeURIComponent(query);
+      fetch(url).then(function(res){
+        if (!res.ok) throw new Error('geocoding failed');
+        return res.json();
+      }).then(function(results){
+        if (!results.length){
+          statusEl.textContent = 'No matches — try a more specific name, or drop the pin manually by editing the address.';
+          return;
+        }
+        statusEl.textContent = results.length + ' match(es) — pick one:';
+        results.forEach(function(r){
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'geo-result';
+          btn.textContent = r.display_name;
+          btn.addEventListener('click', function(){
+            pickGeoResult(r);
+            resultsEl.innerHTML = '';
+          });
+          resultsEl.appendChild(btn);
+        });
+      }).catch(function(){
+        statusEl.textContent = 'Geocoding failed — check your connection, or drop the pin manually.';
+      });
+    }, wait);
+  }
+
+  /* ---- auto-fill from a picked geocode result ---- */
+  var CATEGORY_TYPE_MAP = {
+    restaurant:'food', fast_food:'food', food_court:'food',
+    cafe:'cafe', coffee_shop:'cafe',
+    bar:'bar', pub:'bar', nightclub:'bar', biergarten:'bar',
+    mall:'shopping', marketplace:'shopping', department_store:'shopping', supermarket:'shopping',
+    park:'nature', nature_reserve:'nature', peak:'nature', viewpoint:'nature', wood:'nature', beach:'nature', garden:'nature',
+    attraction:'sight', museum:'sight', artwork:'sight', zoo:'sight', theme_park:'sight', gallery:'sight', temple:'sight', castle:'sight', monument:'sight'
+  };
+  function inferCategory(result){
+    var byType = CATEGORY_TYPE_MAP[(result.type || '').toLowerCase()];
+    if (byType) return byType;
+    var cls = (result.class || '').toLowerCase();
+    if (cls === 'shop') return 'shopping';
+    if (cls === 'natural' || cls === 'leisure') return 'nature';
+    if (cls === 'tourism' || cls === 'historic') return 'sight';
+    return null;
+  }
+
+  var CITY_ALIASES = {
+    Shanghai: ['shanghai'],
+    Chongqing: ['chongqing','chengdu'],
+    Zhangjiajie: ['zhangjiajie','furong','yongshun','wulingyuan'],
+    Beijing: ['beijing']
+  };
+  function inferCity(result){
+    var hay = (result.display_name || '').toLowerCase();
+    for (var city in CITY_ALIASES){
+      var aliases = CITY_ALIASES[city];
+      for (var i = 0; i < aliases.length; i++){
+        if (hay.indexOf(aliases[i]) !== -1) return city;
+      }
+    }
+    return null;
+  }
+
+  function pickGeoResult(r){
+    var statusEl = document.getElementById('geoStatus');
+    dropTempMarker(parseFloat(r.lat), parseFloat(r.lon));
+    document.getElementById('f_address').value = r.display_name;
+
+    var nameEl = document.getElementById('f_name');
+    var localEl = document.getElementById('f_nameLocal');
+    var nd = r.namedetails || {};
+    if (!nameEl.value.trim()) nameEl.value = nd['name:en'] || nd.name || r.name || nameEl.value;
+    if (!localEl.value.trim() && nd['name:zh']) localEl.value = nd['name:zh'];
+
+    var inferred = inferCategory(r);
+    if (inferred) document.getElementById('f_category').value = inferred;
+
+    var cityGuess = inferCity(r);
+    if (cityGuess) document.getElementById('f_city').value = cityGuess;
+
+    var tagsEl = document.getElementById('f_tags');
+    if (!tagsEl.value.trim() && r.type){
+      tagsEl.value = r.type.replace(/_/g,' ');
+    }
+
+    statusEl.textContent = 'Pin dropped — drag it on the map if it needs a nudge. Looking for a blurb…';
+    fetchWikiBlurb(nameEl.value.trim(), function(extract){
+      var notesEl = document.getElementById('f_notes');
+      if (notesEl.value.trim()){
+        statusEl.textContent = 'Pin dropped — drag it on the map if it needs a nudge.';
+        return;
+      }
+      if (extract){
+        notesEl.value = extract;
+        statusEl.textContent = 'Pin dropped, and found a Wikipedia blurb — edit it however you like.';
+      } else {
+        notesEl.value = fallbackBlurb(r, cityGuess);
+        statusEl.textContent = 'Pin dropped — no Wikipedia page for this one, so I put together a quick line from the map data. Edit away.';
+      }
+    });
+  }
+
+  function fetchWikiBlurb(title, cb){
+    if (!title){ cb(null); return; }
+    fetch('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title))
+      .then(function(res){ if (!res.ok) throw new Error('no article'); return res.json(); })
+      .then(function(data){
+        if (data && data.extract && !/may refer to/i.test(data.extract)) cb(data.extract);
+        else cb(null);
+      })
+      .catch(function(){ cb(null); });
+  }
+
+  function fallbackBlurb(result, cityGuess){
+    var type = (result.type || result.class || 'place').replace(/_/g,' ');
+    var bits = ['A ' + type + (cityGuess ? ' in ' + cityGuess : '') + '.'];
+    var extra = result.extratags || {};
+    if (extra.cuisine) bits.push('Cuisine: ' + extra.cuisine.replace(/_/g,', ') + '.');
+    if (extra.brand) bits.push('Part of ' + extra.brand + '.');
+    if (extra.opening_hours) bits.push('Hours: ' + extra.opening_hours + '.');
+    return bits.join(' ');
+  }
+
+  /* ============ event wiring ============ */
+  document.getElementById('openAddBtn').addEventListener('click', function(){
+    var raw = document.getElementById('quickPaste').value.trim();
+    var prefill = {};
+    if (raw){
+      if (isUrl(raw)) prefill.url = raw; else prefill.name = raw;
+    }
+    openAddForm(prefill);
+  });
+  document.getElementById('mobileAddBtn').addEventListener('click', function(){ openAddForm(); });
+  document.getElementById('backToListBtn').addEventListener('click', closeForm);
+
+  document.getElementById('locateBtn').addEventListener('click', function(){
+    var q = document.getElementById('f_locate').value.trim() || document.getElementById('f_name').value.trim();
+    if (!q){ document.getElementById('geoStatus').textContent = 'Type a place name first.'; return; }
+    var city = document.getElementById('f_city').value;
+    geocode(q + (city ? ', ' + city : '') + ', China');
+  });
+
+  document.getElementById('addForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('f_name').value.trim();
+    if (!name){ toast('Give it a name first.'); return; }
+    if (!state.tempMarker){ toast('Locate it on the map first (or drag a pin).'); return; }
+    var pos = state.tempMarker.getLatLng();
+    var tags = document.getElementById('f_tags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
+    var sourceUrl = document.getElementById('f_source').value.trim();
+
+    var place = {
+      id: state.editingId || makeId(name),
+      name: name,
+      nameLocal: document.getElementById('f_nameLocal').value.trim(),
+      category: document.getElementById('f_category').value,
+      city: document.getElementById('f_city').value,
+      coords: { lat: pos.lat, lng: pos.lng, datum: 'WGS84' },
+      address: document.getElementById('f_address').value.trim(),
+      source: { platform: sourceUrl ? 'link' : 'typed', url: sourceUrl, creator:'' },
+      notes: document.getElementById('f_notes').value.trim(),
+      tags: tags,
+      status: document.getElementById('f_status').value,
+      addedAt: new Date().toISOString().slice(0,10)
+    };
+
+    state.places = Storage.upsert(place);
+    closeForm();
+    refreshAll();
+    selectPlace(place.id);
+    toast(state.editingId ? 'Updated.' : 'Pinned it.');
+    document.getElementById('quickPaste').value = '';
+  });
+
+  document.getElementById('deleteBtn').addEventListener('click', function(){
+    if (!state.editingId) return;
+    if (!confirm('Remove this place from the map?')) return;
+    state.places = Storage.remove(state.editingId);
+    closeForm();
+    resetToChina();
+    refreshAll();
+    toast('Removed.');
+  });
+
+  document.getElementById('ic_edit').addEventListener('click', function(){
+    var p = state.places.find(function(x){ return x.id === state.selectedId; });
+    if (p) openEditForm(p);
+  });
+
+  document.getElementById('closeInfoBtn').addEventListener('click', function(){
+    state.selectedId = null;
+    hideInfoCard();
+    renderPins();
+    highlightSelectedCard();
+  });
+
+  document.getElementById('ic_copy').addEventListener('click', function(){
+    var text = document.getElementById('ic_address').textContent;
+    navigator.clipboard.writeText(text).then(function(){
+      var btn = document.getElementById('ic_copy');
+      btn.classList.add('copied');
+      btn.textContent = 'Copied ✓';
+      setTimeout(function(){ btn.classList.remove('copied'); btn.textContent = 'Copy address'; }, 1400);
+    }).catch(function(){ toast('Could not copy — select and copy manually.'); });
+  });
+
+  document.getElementById('resetViewBtn').addEventListener('click', resetToChina);
+
+  /* ---- export / import menu ---- */
+  var menuDropdown = document.getElementById('menuDropdown');
+  document.getElementById('menuBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    menuDropdown.hidden = !menuDropdown.hidden;
+  });
+  document.addEventListener('click', function(){ menuDropdown.hidden = true; });
+  menuDropdown.addEventListener('click', function(e){ e.stopPropagation(); });
+
+  document.getElementById('exportBtn').addEventListener('click', function(){
+    var blob = new Blob([Storage.exportJSON()], { type:'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'china-reels-map-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    menuDropdown.hidden = true;
+    toast('Exported.');
+  });
+  document.getElementById('importBtn').addEventListener('click', function(){
+    menuDropdown.hidden = true;
+    document.getElementById('importInput').click();
+  });
+  document.getElementById('importInput').addEventListener('change', function(e){
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        state.places = Storage.importJSON(reader.result);
+        refreshAll();
+        resetToChina();
+        toast('Imported ' + state.places.length + ' places.');
+      } catch(err){
+        alert('Could not import: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  /* ---- mobile sidebar toggle ---- */
+  function openSidebarMobile(){
+    if (window.innerWidth <= 760) document.getElementById('sidebar').classList.add('open');
+  }
+  function closeMobileSidebarSoon(){
+    if (window.innerWidth <= 760){
+      setTimeout(function(){ document.getElementById('sidebar').classList.remove('open'); }, 250);
+    }
+  }
+  document.getElementById('mobileListBtn').addEventListener('click', function(){
+    document.getElementById('sidebar').classList.toggle('open');
+  });
+
+  /* ============ refresh ============ */
+  function refreshAll(){
+    renderFilterChips();
+    renderList();
+    renderPins();
+    renderCityLabels();
+  }
+
+  /* ============ boot ============ */
+  populateSelects();
+  updateCityLabelVisibility();
+  Storage.seedIfEmpty().then(function(places){
+    state.places = places;
+    refreshAll();
+  });
+
+})();
+</script>
+</body>
+</html>

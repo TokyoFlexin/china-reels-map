@@ -1,0 +1,11 @@
+.DS_Store
+
+# Working docs live in the private china-reels-map-docs repo, not here.
+# Pushed with ./push-docs.sh (separate git dir, same working tree).
+CLAUDE.md
+PERSONALITY.md
+INSTRUCTIONS.md
+PROGRESS.md
+SETUP.md
+.git-docs/
+china-reels-map-*.json
