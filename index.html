@@ -1775,12 +1775,27 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   /* ============ toast ============ */
   var toastTimer = null;
-  function toast(msg){
+  function toast(msg, ms){
     var el = document.getElementById('toast');
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 1800);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, ms || 1800);
+  }
+
+  /* Adding the first place in a new city changes two things the user is
+     looking straight past: the city's filter chip appears past the right
+     edge of the (horizontally scrollable) filter row, and its map label
+     only draws at the whole-trip zoom — while the save has just flown the
+     map to z14. Without this, adding a city looks like nothing happened. */
+  function revealCityChip(city){
+    var chips = document.querySelectorAll('#cityFilters button');
+    for (var i = 0; i < chips.length; i++){
+      if (chips[i].textContent.trim().toUpperCase() === city.toUpperCase()){
+        chips[i].scrollIntoView({ block:'nearest', inline:'center', behavior:'smooth' });
+        return;
+      }
+    }
   }
 
   /* ============ add / edit form ============ */
@@ -2052,6 +2067,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     var name = document.getElementById('f_name').value.trim();
     if (!name){ toast('Give it a name first.'); return; }
     if (!state.tempMarker){ toast('Locate it on the map first (or drag a pin).'); return; }
+    /* Trimmed because it's free text now — "Xi'an " would otherwise become a
+       second city sitting next to "Xi'an", with its own chip and label. */
+    var city = document.getElementById('f_city').value.trim();
+    if (!city){ toast('Which city? Type one — a new name is fine.'); return; }
+    var citiesBefore = cities();
     var pos = state.tempMarker.getLatLng();
     var tags = document.getElementById('f_tags').value.split(',').map(function(t){ return t.trim(); }).filter(Boolean);
     var sourceUrl = document.getElementById('f_source').value.trim();
@@ -2061,7 +2081,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       name: name,
       nameLocal: document.getElementById('f_nameLocal').value.trim(),
       category: document.getElementById('f_category').value,
-      city: document.getElementById('f_city').value,
+      city: city,
       coords: { lat: pos.lat, lng: pos.lng, datum: 'WGS84' },
       address: document.getElementById('f_address').value.trim(),
       source: { platform: sourceUrl ? 'link' : 'typed', url: sourceUrl, creator:'' },
@@ -2071,11 +2091,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
       addedAt: new Date().toISOString().slice(0,10)
     };
 
+    var isNewCity = citiesBefore.indexOf(city) === -1;
     state.places = Storage.upsert(place);
     closeForm();
     refreshAll();
     selectPlace(place.id);
-    toast(state.editingId ? 'Updated.' : 'Pinned it.');
+    if (isNewCity){
+      revealCityChip(city);
+      toast(city + ' is on the map now — tap "Whole trip" to see it.', 3600);
+    } else {
+      toast(state.editingId ? 'Updated.' : 'Pinned it.');
+    }
     document.getElementById('quickPaste').value = '';
   });
 
