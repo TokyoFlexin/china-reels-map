@@ -1288,7 +1288,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
           </div>
           <div class="field">
             <label for="f_city">City</label>
-            <select id="f_city"></select>
+            <input id="f_city" type="text" list="cityOptions" placeholder="Shanghai, or a new one" autocomplete="off">
+            <datalist id="cityOptions"></datalist>
           </div>
         </div>
         <div class="field">
@@ -1373,7 +1374,12 @@ svg.leaflet-image-layer.leaflet-interactive path {
   var CATEGORY_MAP = {};
   CATEGORIES.forEach(function(c){ CATEGORY_MAP[c.id] = c; });
 
-  var CITIES = ['Shanghai','Chongqing','Zhangjiajie','Beijing'];
+  /* The trip's cities, in the order they're visited — this only fixes the
+     ORDER of known cities and their map centers. The live city list comes
+     from the data (see cities()), so typing a new one into the add form is
+     all it takes to add it; Xi'an is pre-seeded with a center so its first
+     pin gets a properly placed label rather than a centroid guess. */
+  var CITY_ORDER = ['Shanghai','Chongqing','Zhangjiajie','Beijing',"Xi'an"];
   var CITY_CENTERS = {
     /* `dir` splays each tag a different way off its point — at the idle
        China zoom Chongqing/Zhangjiajie/Shanghai sit close enough that
@@ -1381,8 +1387,31 @@ svg.leaflet-image-layer.leaflet-interactive path {
     Shanghai:    { lat:31.2304, lng:121.4737, dir:'up'    },
     Chongqing:   { lat:29.5630, lng:106.5516, dir:'left'  },
     Zhangjiajie: { lat:29.1170, lng:110.4790, dir:'down'  },
-    Beijing:     { lat:39.9042, lng:116.4074, dir:'up'    }
+    Beijing:     { lat:39.9042, lng:116.4074, dir:'up'    },
+    "Xi'an":     { lat:34.3416, lng:108.9398, dir:'up'    }
   };
+
+  /* Every city that actually has a pin, trip cities first, then any others
+     alphabetically. Drives the filter chips, the list grouping and the
+     city labels — so none of them need touching to add a city. */
+  function cities(){
+    var seen = {};
+    (state.places || []).forEach(function(p){ if (p.city) seen[p.city] = true; });
+    var known = CITY_ORDER.filter(function(c){ return seen[c]; });
+    var extra = Object.keys(seen).filter(function(c){ return CITY_ORDER.indexOf(c) === -1; }).sort();
+    return known.concat(extra);
+  }
+
+  /* A hand-picked center where we have one, otherwise the middle of that
+     city's own pins — good enough to hang a label off and fly to. */
+  function cityCenter(city){
+    if (CITY_CENTERS[city]) return CITY_CENTERS[city];
+    var pts = (state.places || []).filter(function(p){ return p.city === city; });
+    if (!pts.length) return null;
+    var lat = 0, lng = 0;
+    pts.forEach(function(p){ lat += p.coords.lat; lng += p.coords.lng; });
+    return { lat: lat/pts.length, lng: lng/pts.length, dir:'up' };
+  }
   var CITY_LABEL_MAX_ZOOM = 6;
   var STATUSES = ['want','booked','visited'];
   var CHINA_BOUNDS = [[15,73],[54,135]];
@@ -1490,8 +1519,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   function renderCityLabels(){
     cityLabelLayer.clearLayers();
-    CITIES.forEach(function(city){
-      var c = CITY_CENTERS[city];
+    cities().forEach(function(city){
+      var c = cityCenter(city);
       if (!c) return;
       var active = state.filters.city === city;
       var icon = L.divIcon({
@@ -1512,12 +1541,20 @@ svg.leaflet-image-layer.leaflet-interactive path {
     });
   }
 
-  function updateCityLabelVisibility(){
-    var show = map.getZoom() <= CITY_LABEL_MAX_ZOOM;
-    if (show){ if (!map.hasLayer(cityLabelLayer)) cityLabelLayer.addTo(map); }
-    else { if (map.hasLayer(cityLabelLayer)) map.removeLayer(cityLabelLayer); }
+  /* City tags and place pins swap over at the same threshold: zoomed out you
+     get one tag per city and nothing else, and the dots only appear once
+     you've zoomed past the tag. Sahel's call — it replaces the original
+     "pins at country zoom for aesthetics" idea, which just read as clutter. */
+  function updateZoomLayers(){
+    var wide = map.getZoom() <= CITY_LABEL_MAX_ZOOM;
+    toggleLayer(cityLabelLayer, wide);
+    toggleLayer(markerLayer, !wide);
   }
-  map.on('zoomend', updateCityLabelVisibility);
+  function toggleLayer(layer, show){
+    if (show === map.hasLayer(layer)) return;
+    if (show) layer.addTo(map); else map.removeLayer(layer);
+  }
+  map.on('zoomend', updateZoomLayers);
 
   function pinDivIcon(categoryId, selected){
     var cat = CATEGORY_MAP[categoryId] || CATEGORY_MAP.other;
@@ -1589,7 +1626,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
     cityWrap.appendChild(makeChip('All Cities', !state.filters.city, function(){
       state.filters.city = null; refreshAll();
     }));
-    CITIES.forEach(function(city){
+    cities().forEach(function(city){
       cityWrap.appendChild(makeChip(city, state.filters.city === city, function(){
         state.filters.city = (state.filters.city === city) ? null : city;
         refreshAll();
@@ -1636,10 +1673,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
     var extraOrder = [];
     filtered.forEach(function(p){
       var city = p.city || 'Other';
-      if (!groups[city]){ groups[city] = []; if (CITIES.indexOf(city) === -1) extraOrder.push(city); }
+      if (!groups[city]){ groups[city] = []; if (CITY_ORDER.indexOf(city) === -1) extraOrder.push(city); }
       groups[city].push(p);
     });
-    var cityOrder = CITIES.filter(function(c){ return groups[c]; }).concat(extraOrder);
+    var cityOrder = CITY_ORDER.filter(function(c){ return groups[c]; }).concat(extraOrder);
 
     cityOrder.forEach(function(city){
       var head = document.createElement('div');
@@ -1750,8 +1787,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   function populateSelects(){
     var catSel = document.getElementById('f_category');
     catSel.innerHTML = CATEGORIES.map(function(c){ return '<option value="' + c.id + '">' + c.label + '</option>'; }).join('');
-    var citySel = document.getElementById('f_city');
-    citySel.innerHTML = CITIES.map(function(c){ return '<option value="' + c + '">' + c + '</option>'; }).join('');
+    renderCityOptions();
   }
 
   function slugify(str){
@@ -1914,7 +1950,8 @@ svg.leaflet-image-layer.leaflet-interactive path {
     Shanghai: ['shanghai'],
     Chongqing: ['chongqing','chengdu'],
     Zhangjiajie: ['zhangjiajie','furong','yongshun','wulingyuan'],
-    Beijing: ['beijing']
+    Beijing: ['beijing'],
+    "Xi'an": ["xi'an", 'xian', '西安']
   };
   function inferCity(result){
     var hay = (result.display_name || '').toLowerCase();
@@ -1924,7 +1961,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
         if (hay.indexOf(aliases[i]) !== -1) return city;
       }
     }
-    return null;
+    /* No alias hit — take Nominatim's own answer (addressdetails=1 is already
+       on the query). That's what makes a brand-new city like Xi'an fill itself
+       in without anyone adding it to a list first. */
+    var a = result.address || {};
+    return a.city || a.town || a.municipality || a.county || a.state || null;
   }
 
   function pickGeoResult(r){
@@ -2126,7 +2167,17 @@ svg.leaflet-image-layer.leaflet-interactive path {
   });
 
   /* ============ refresh ============ */
+  /* Type-ahead for the City field: the trip cities plus anything already in
+     the data. It's a datalist, not a select, so a city that's in neither
+     (the first place you add in a new city) is still just typed in. */
+  function renderCityOptions(){
+    var list = CITY_ORDER.concat(cities().filter(function(c){ return CITY_ORDER.indexOf(c) === -1; }));
+    document.getElementById('cityOptions').innerHTML =
+      list.map(function(c){ return '<option value="' + c.replace(/"/g,'&quot;') + '">'; }).join('');
+  }
+
   function refreshAll(){
+    renderCityOptions();
     renderFilterChips();
     renderList();
     renderPins();
@@ -2135,7 +2186,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
   /* ============ boot ============ */
   populateSelects();
-  updateCityLabelVisibility();
+  updateZoomLayers();
   Storage.seedIfEmpty().then(function(places){
     state.places = places;
     refreshAll();
